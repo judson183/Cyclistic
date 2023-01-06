@@ -2,6 +2,8 @@
 #install packages
 install.packages("dplyr")
 install.packages("tidyr")
+install.packages("geosphere")
+library(geosphere)
 library(dplyr)
 library(tidyr)
 
@@ -51,6 +53,48 @@ sum(is.na(cyclistic_combined))
 cyclistic_combined <- drop_na(cyclistic_combined)
 sum(is.na(cyclistic_combined))    #no NA's
 
+#find duplicated data
+sum(duplicated(cyclistic_combined))   # no duplicated values
+
+#seperate day, time , date, year, month 
+cyclistic_combined$year <- format(as.Date(cyclistic_combined$started_at),"%Y")  #year
+cyclistic_combined$date <- format(as.Date(cyclistic_combined$started_at),"%d")  #date
+cyclistic_combined$month <- format(as.Date(cyclistic_combined$started_at),"%B") #month
+cyclistic_combined$day <- format(as.Date(cyclistic_combined$started_at),"%A") #day
+cyclistic_combined$duration_of_ride <- difftime(cyclistic_combined$ended_at,cyclistic_combined$started_at) #time differrence in seconds
+cyclistic_combined$started_at <- strftime(cyclistic_combined$started_at,"%H")
+
+#changing tyype of duration to number
+cyclistic_combined$duration_of_ride <- as.numeric(cyclistic_combined$duration_of_ride)
+typeof(cyclistic_combined$duration_of_ride)
+
+
+cyclistic_combined[c('duration_of_ride','started_at','ended_at')]
+
+
+#ride duration was 0
+cyclistic_combined['duration_of_ride'== 0]   # no ride duration with 0 mins
+
+#find how much distance is covered by each rider in km
+cyclistic_combined$total_distance <- distGeo(matrix(c(cyclistic_combined$start_lng,cyclistic_combined$start_lat), ncol = 2),
+                                             matrix(c(cyclistic_combined$end_lng,cyclistic_combined$end_lat), ncol = 2))
+
+cyclistic_combined$total_distance <- cyclistic_combined$total_distance/1000  #returns trip length in Km
+
+cyclistic_combined$total_distance  #there are columns with distance as 0
+# we need to remove these rows which as 0 because they are not useful
+
+#rounding km
+cyclistic_combined$total_distance <- round(cyclistic_combined$total_distance,digits =1)
+
+
+
+#removing rows with 0 as trip duration
+cyclistic_final <- cyclistic_combined[!(cyclistic_combined$duration_of_ride <= 0),]  #we could also use filter
+
+
+#summary
+summary(cyclistic_final)
 
 
 
